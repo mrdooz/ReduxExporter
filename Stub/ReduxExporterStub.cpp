@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "ReduxExporterStub.hpp"
 #include "ScopedDeleter.hpp"
+#include "exporter_settings.hpp"
 
 using namespace std;
 
@@ -52,7 +53,8 @@ using namespace std;
   }\
 }
 
-namespace {
+namespace 
+{
   const char* kDefaultFileExtension = "rdx";
 }
 
@@ -70,41 +72,31 @@ MStatus	ReduxExporterStub::reader(const MFileObject& file, const MString& option
   return MS::kFailure;
 }
 
-void ReduxExporterStub::parse_options(const MString& options) {
-  int i, length;
-  // Start parsing.
-  MStringArray optionList;
-  MStringArray theOption;
+void ReduxExporterStub::parse_options(const MString& options) 
+{
+  cout << "options: " << options.asChar() << endl;
+
+  ExporterSettings settings;
 
   //	each option is in the form -
   //	[Option] = [Value];
-  //
-  //	the options are therefore split by the semi-colons
-  //
-  options.split(';', optionList);
+  MStringArray option_list;
+  options.split(';', option_list);
 
-  //	process each option in the string
-  //
-  length = optionList.length();
-  for( i = 0; i < length; ++i )
-  {
-    theOption.clear();
+  for (uint32_t i = 0; i < option_list.length(); ++i) {
+    MStringArray cur_option;
+    option_list[i].split('=', cur_option);
 
-    //	split the option using the '=' character. This should make 
-    //	theOption[0] hold the option name, and theOption[1] hold the
-    //	value of the current option
-    //
-    optionList[i].split( '=', theOption );
-/*
-    if( theOption[0] == namesonlyFlag && theOption.length() > 1 ) 
-    {
-      if(theOption[1].asInt()>0) 
-        short_ = true;
-      else 
-        short_ = false;
+    if (cur_option[0] == "bounding_box") {
+      settings.compute_bounding_box = !!cur_option[1].asInt();
+      cout << "bounding box " << settings.compute_bounding_box << endl;
+    } else if (cur_option[0] == "vertex_cache") {
+      settings.use_vertex_cache = !!cur_option[1].asInt();
+      cout << "use_vertex_cache " << settings.use_vertex_cache << endl;
     }
-*/
+
   }
+
 }
 
 //-------------------------------------------------------------------	writer
@@ -139,15 +131,7 @@ MStatus	ReduxExporterStub::writer(const MFileObject& file, const MString& option
     cerr << "[ERROR] Unable to find export_main function" << endl;
     return MS::kFailure;
   }
-/*
-#pragma warning(suppress: 4996)
-  data_file_ = fopen(file.fullName().asChar(), "wb");
-  if (NULL == data_file_) {
-    cerr << "[ERROR] Could not open file for writing " << file.fullName().asChar() << endl;
-    return MS::kFailure;
-  }
-  SCOPED_DELETER(&fclose, data_file_);
-*/
+
   return export_main(file.fullName().asChar()) ? MS::kSuccess : MS::kFailure;
 }
 
@@ -168,11 +152,13 @@ void* ReduxExporterStub::creator() {
 
 //-------------------------------------------------------------------
 
-/// specifies a script to use for the user interface options box
-char* g_OptionScript = "MayaFileExportScript";
+/// specifies a script to use for the user interface options box, placed inside your scripts
+// directory. This is usually "my documents/maya/scripts" or 
+
+char* g_OptionScript = "ReduxExporter";
 
 /// a set of default options for the exporter
-char* g_DefaultOptions = "-namesonly=0;";
+char* g_DefaultOptions = "";
 
 //-------------------------------------------------------------------	initializePlugin
 ///	\brief	initializePlugin( MObject obj )

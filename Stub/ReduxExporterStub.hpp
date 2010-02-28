@@ -8,12 +8,12 @@ public:
 	ReduxExporterStub(void);
 	~ReduxExporterStub(void);
 
-	MStatus	reader( const MFileObject& file, const MString& optionsString, FileAccessMode mode);
-	MStatus	writer( const MFileObject& file, const MString& optionsString, FileAccessMode mode );
+	virtual MStatus	reader( const MFileObject& file, const MString& optionsString, FileAccessMode mode);
+	virtual MStatus	writer( const MFileObject& file, const MString& optionsString, FileAccessMode mode );
 
-  bool haveReadMethod() const { return false; }
-  bool haveWriteMethod() const { return true; }
-  MString defaultExtension () const;
+  virtual bool haveReadMethod() const { return false; }
+  virtual bool haveWriteMethod() const { return true; }
+  virtual MString defaultExtension () const;
 
 	MFileKind identifyFile(const MFileObject& fileName, const char* buffer, short size) const;
 	static void* creator();

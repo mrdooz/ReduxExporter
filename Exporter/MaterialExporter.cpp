@@ -86,7 +86,6 @@ void write_common_material_props(FILE* material_file, const Shader& shader, cons
   const float trans = color_to_grayscale(shader.transparency());
   const char* psz_name = material_name.c_str();
 
-#ifdef EXPORT_JSON
   fprintf(material_file, "\t\t{ \"name\" : \"%s\",\n", material_name.c_str());
   fprintf(material_file, "\t\t\"values\" : [\n");
   write_float1_json(material_file, trans, kTransparencyName, true);
@@ -94,25 +93,6 @@ void write_common_material_props(FILE* material_file, const Shader& shader, cons
   write_color_json(material_file, shader.color(), kDiffuseName, true);
   write_color_json(material_file, shader.incandescence(), kEmissiveName, false);
   fprintf(material_file, "\t\t] }%s\n", (write_comma ? "," : ""));
-#else
-
-  fprintf(material_file, "class %s():\n", psz_name);
-  fprintf(material_file, "\tdef __init__(self): \n\t\tself.name = \"%s\"\n", psz_name);
-
-  fprintf(material_file, "\t\tself.values = [\n");
-  write_float1_py(material_file, trans, kTransparencyName, material_name);
-  write_color_py(material_file, shader.ambientColor(), kAmbientName, material_name);
-  write_color_py(material_file, shader.color(), kDiffuseName, material_name);
-  write_color_py(material_file, shader.incandescence(), kEmissiveName, material_name);
-
-  if (!texture_filename.empty()) {
-    fs::path texture_path(texture_filename);
-    fprintf(material_file, "\t\t\t(\"diffuse_texture\", \"%s\"),\n", texture_path.filename().c_str());
-  }
-
-  fprintf(material_file, "\t\t]");
-  fprintf(material_file, "\n");
-#endif
 }
 
 

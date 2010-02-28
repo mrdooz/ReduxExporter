@@ -21,12 +21,7 @@ ReduxExporter::ReduxExporter(const char* filename)
   : filename_(filename)
   , writer_()
   , animation_exporter_(writer_)
-#ifdef EXPORT_JSON
   , json_file_(NULL)
-#else
-  , material_file_(NULL)
-  , scene_file_(NULL)
-#endif
 {
   writer_.init_writer(ChunkIo::MainHeader::CompressedZLib);
 }
@@ -40,21 +35,10 @@ MStatus ReduxExporter::export_all()
   out_path.replace_extension();
 
 
-#ifdef EXPORT_JSON
   const string json_filename(out_path.string() + ".json");
   RETURN_ON_ERROR_BOOL(fopen_s(&json_file_, json_filename.c_str(), "wt") == 0);
   SCOPED_DELETER(&fclose, json_file_);
   fprintf(json_file_, "{\n");
-#else
-  const string materials_filename(out_path.string() + "_materials.py");
-  const string scene_filename(out_path.string() + "_scene.py");
-  RETURN_ON_ERROR_BOOL(fopen_s(&material_file_, materials_filename.c_str(), "wt") == 0);
-  fprintf(material_file_, "import dx_ext as dx\n\n");
-  RETURN_ON_ERROR_BOOL(fopen_s(&scene_file_, scene_filename.c_str(), "wt") == 0);
-
-  SCOPED_DELETER(&fclose, material_file_);
-  SCOPED_DELETER(&fclose, scene_file_);
-#endif
 
   RETURN_ON_ERROR_MSTATUS(export_hierarchy());
 
@@ -74,9 +58,7 @@ MStatus ReduxExporter::export_all()
   writer_.get_buffer(buf, len);
   RETURN_ON_ERROR_BOOL(write_file(buf, len, out_filename.c_str()));
 
-#ifdef EXPORT_JSON
   fprintf(json_file_, "\n}");
-#endif
 
   _strtime_s(time_buf, sizeof(time_buf));
   cout << "***************************************** EXPORTING SUCESSFULLY DONE (" << time_buf << ")" << endl;
@@ -86,7 +68,6 @@ MStatus ReduxExporter::export_all()
 
 MStatus ReduxExporter::export_materials()
 {
-#ifdef EXPORT_JSON
   // Export materials
   fprintf(json_file_, "\t\"materials\" : [\n" );
   for (uint32_t i = 0; i < materials_.size(); ++i) {
@@ -120,43 +101,6 @@ MStatus ReduxExporter::export_materials()
     fprintf(json_file_, "\"%s\"%s \n\t", (*it).first.c_str(), (--counter != 0 ? "," : "") );
   }
   fprintf(json_file_, "] } ]\n");
-
-#else
-  for (uint32_t i = 0; i < materials_.size(); ++i) {
-    write_material(material_file_, materials_[i]);
-  }
-
-  fprintf(scene_file_, "material_connections = [\n");
-
-  const bool use_old_method = false;
-  if (use_old_method) {
-    // [(material_name, [meshes])]
-    for (MeshesByMaterialName::iterator it = meshes_by_material_name_.begin(); it != meshes_by_material_name_.end(); ++it) {
-      fprintf(scene_file_, "\t(\"%s\", [", it->first.c_str());
-      for (Meshes::iterator mesh_it = it->second.begin(); mesh_it != it->second.end(); ++mesh_it) {
-        fprintf(scene_file_, "\"%s\",", mesh_it->c_str());
-      }
-      fprintf(scene_file_, "]),\n");
-    }
-  } else {
-    // [(mesh_name, material_name)]
-    for (MeshesByMaterialName::iterator it = meshes_by_material_name_.begin(); it != meshes_by_material_name_.end(); ++it) {
-      for (Meshes::iterator mesh_it = it->second.begin(); mesh_it != it->second.end(); ++mesh_it) {
-        fprintf(scene_file_, "\t(\"%s\",\"%s\"),\n", mesh_it->c_str(), it->first.c_str());
-      }
-    }
-  }
-  fprintf(scene_file_, "]\n");
-
-  // export shader connections
-  const char* psz_default_shader = "blinn_effect";
-  fprintf(scene_file_, "effect_connections = [(\"%s\", [\n\t", psz_default_shader);
-  for (MeshesByMaterialName::iterator it = meshes_by_material_name_.begin(); it != meshes_by_material_name_.end(); ++it) {
-    fprintf(scene_file_, "\"%s\", \n\t", (*it).first.c_str());
-  }
-  fprintf(scene_file_, "])]\n");
-
-#endif
 
   return MS::kSuccess;
 }

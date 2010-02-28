@@ -1,6 +1,4 @@
-
-
-global proc int MayaFileExportScript ( string $parent,
+global proc int ReduxExporter ( string $parent,
 								   string $action,
 								   string $initialSettings,
 								   string $resultCallback )
@@ -39,60 +37,37 @@ global proc int MayaFileExportScript ( string $parent,
 	{
 		setParent $parent;
 
-		columnLayout -adj true objTypeCol;
-			radioButtonGrp
-				-l "NameOnlys"
-				-nrb 2 -cw3 175 75 75
-				-la2 "On" "Off" rglNamesOnly;
+		rowColumnLayout -numberOfColumns 2 -columnWidth 1 130 -columnWidth 2 130; 
+			string $checkBox1, $checkBox2; 
+            $checkBox1 = `checkBox -label "Compute bounding box"`; 
+			$checkBox2 = `checkBox -label "Optimize for vertex cache"`; 
 
 		// Now set to current settings.
 		$currentOptions = $initialSettings;
-		if (size($currentOptions) > 0)
-		{
-			tokenize($currentOptions, ";", $optionList);
-			for ($index = 0; $index < size($optionList); $index++)
-			{
-				tokenize($optionList[$index], "=", $optionBreakDown);
-
-				if ($optionBreakDown[0] == "-namesonly")
-				{
-					if ($optionBreakDown[1] == "0")
-					{
-						radioButtonGrp -e -sl 2 rglNamesOnly;
-					}
-					else
-					{
-						radioButtonGrp -e -sl 1 rglNamesOnly;
-					}
-				}
-			}
-			$result = 1;
-
-		}
-		else
-		if ($action == "query")
-		{
-
-			if (`radioButtonGrp -q -sl rglNamesOnly` == 1)
-			{
-				$currentOptions = $currentOptions + "-namesonly=1";
-			}
-			else
-			{
-				$currentOptions = $currentOptions + "-namesonly=0";
-			}
-
-			eval($resultCallback+" \""+$currentOptions+"\"");
-			$result = 1;
-		}
-		else
-		{
-			$bResult = 0;
-		}
-
-		return $bResult;
+		$bResult = 1;
 	}
 
+	if ($action == "query")
+	{
+		if (`checkBox -query -value checkBox1`) {
+			$currentOptions = $currentOptions + "bounding_box=1;";
+		} else {
+			$currentOptions = $currentOptions + "bounding_box=0;";
+		}
 
+		if (`checkBox -query -value checkBox2`) {
+			$currentOptions = $currentOptions + "vertex_cache=1;";
+		} else {
+			$currentOptions = $currentOptions + "vertex_cache=0;";
+		}
 
+		eval($resultCallback+" \""+$currentOptions+"\"");
+		$bResult = 1;
+	}
+	else
+	{
+		$bResult = 0;
+	}
+
+	return $bResult;
 }

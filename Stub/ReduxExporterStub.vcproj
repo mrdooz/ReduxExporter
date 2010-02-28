@@ -235,6 +235,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc"
 			>
 			<File
+				RelativePath=".\exporter_settings.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ReduxExporterStub.hpp"
 				>
 			</File>

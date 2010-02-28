@@ -34,14 +34,8 @@ private:
   MeshesByMaterialName meshes_by_material_name_;
 
   const char* filename_;
-  //FILE* data_file_;
   ChunkIo writer_;
-#ifdef EXPORT_JSON
   FILE* json_file_;
-#else
-  FILE* material_file_;
-  FILE* scene_file_;
-#endif
 
   ExportedMaterials exported_materials_;
   std::vector<MObject> materials_;
