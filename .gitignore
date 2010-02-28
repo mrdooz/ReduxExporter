@@ -1,0 +1,13 @@
+Debug/
+Release/
+data/
+*.ilk
+*.lib
+*.pdb
+*.pyd
+*.ncb
+*.suo
+*.vcproj.*
+*.exp
+*.bmp
+*.*~
